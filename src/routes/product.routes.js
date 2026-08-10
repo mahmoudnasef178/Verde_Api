@@ -7,6 +7,7 @@ const {
   updateProduct,
   deleteProduct,
   seedProducts,
+  createProductReview,
 } = require('../controllers/product.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -197,5 +198,46 @@ router.put('/:id', protect, updateProduct);
  *         description: تم حذف المنتج بنجاح
  */
 router.delete('/:id', protect, deleteProduct);
+
+/**
+ * @openapi
+ * /api/products/{id}/reviews:
+ *   post:
+ *     summary: إضافة تقييم ومراجعة للمنتج (Add Product Review)
+ *     tags:
+ *       - Products
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rating
+ *               - comment
+ *             properties:
+ *               rating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
+ *               comment:
+ *                 type: string
+ *                 example: عطر أكثر من رائع والثبات ممتاز جدًا!
+ *     responses:
+ *       201:
+ *         description: تم إضافة التقييم بنجاح
+ *       400:
+ *         description: تم تقييم المنتج مسبقاً من نفس المستخدم
+ */
+router.post('/:id/reviews', protect, createProductReview);
 
 module.exports = router;

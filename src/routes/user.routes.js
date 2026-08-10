@@ -1,0 +1,138 @@
+const express = require('express');
+const {
+  updateProfile,
+  changePassword,
+  addAddress,
+  getAddresses,
+} = require('../controllers/user.controller');
+const { protect } = require('../middleware/auth.middleware');
+
+const router = express.Router();
+
+router.use(protect);
+
+/**
+ * @openapi
+ * /api/users/profile:
+ *   put:
+ *     summary: تحديث البيانات الشخصية للمستخدم (Update Profile)
+ *     tags:
+ *       - Users & Profile
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: أحمد محمود
+ *               phone:
+ *                 type: string
+ *                 example: "01012345678"
+ *               avatar:
+ *                 type: string
+ *                 example: https://ui-avatars.com/api/?name=Ahmed
+ *     responses:
+ *       200:
+ *         description: تم تحديث البيانات الشخصية بنجاح
+ */
+router.put('/profile', updateProfile);
+
+/**
+ * @openapi
+ * /api/users/password:
+ *   put:
+ *     summary: تغيير كلمة المرور (Change Password)
+ *     tags:
+ *       - Users & Profile
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: "123456"
+ *               newPassword:
+ *                 type: string
+ *                 example: "654321"
+ *     responses:
+ *       200:
+ *         description: تم تغيير كلمة المرور بنجاح
+ *       401:
+ *         description: كلمة المرور الحالية غير صحيحة
+ */
+router.put('/password', changePassword);
+
+/**
+ * @openapi
+ * /api/users/address:
+ *   get:
+ *     summary: جلب قائمة عناوين الشحن المحفوظة (Get Shipping Addresses)
+ *     tags:
+ *       - Users & Profile
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: قائمة عناوين الشحن
+ */
+router.get('/address', getAddresses);
+
+/**
+ * @openapi
+ * /api/users/address:
+ *   post:
+ *     summary: إضافة عنوان شحن جديد (Add Shipping Address)
+ *     tags:
+ *       - Users & Profile
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullName
+ *               - phone
+ *               - city
+ *               - address
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: أحمد محمود
+ *               phone:
+ *                 type: string
+ *                 example: "01012345678"
+ *               city:
+ *                 type: string
+ *                 example: القاهرة
+ *               address:
+ *                 type: string
+ *                 example: المعادي، شارع 9، منزل 15
+ *               postalCode:
+ *                 type: string
+ *                 example: "11431"
+ *               isDefault:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       201:
+ *         description: تم إضافة العنوان بنجاح
+ */
+router.post('/address', addAddress);
+
+module.exports = router;
