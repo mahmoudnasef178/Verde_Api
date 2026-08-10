@@ -5,6 +5,7 @@ const swaggerSpec = require('./config/swagger');
 
 // Route imports
 const authRoutes = require('./routes/auth.routes');
+const productRoutes = require('./routes/product.routes');
 
 const app = express();
 
@@ -90,6 +91,7 @@ app.get('/api-docs.json', (req, res) => {
 // Routes
 // ─────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
 /**
  * @openapi
