@@ -1,3 +1,4 @@
+const path = require('path');
 const swaggerJSDoc = require('swagger-jsdoc');
 
 // Dynamically resolve the public server URL.
@@ -61,7 +62,10 @@ const options = {
       },
     },
   },
-  apis: ['./src/routes/*.js', './src/app.js'],
+  apis: [
+    path.join(__dirname, '../routes/*.js'),
+    path.join(__dirname, '../app.js'),
+  ],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
