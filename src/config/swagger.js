@@ -70,5 +70,65 @@ const options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 
+// Guarantee /api/users and /api/users/all are present in paths regardless of environment/glob parsing
+swaggerSpec.paths = swaggerSpec.paths || {};
+
+swaggerSpec.paths['/api/users'] = {
+  get: {
+    summary: 'جلب جميع المستخدمين المسجلين في النظام (Get All Users)',
+    description: 'يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب وكلمة المرور المشفرة.',
+    tags: ['GetAllUser'],
+    responses: {
+      '200': {
+        description: 'قائمة بجميع المستخدمين المسجلين وحساباتهم بنجاح (تتضمن كلمة المرور)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean', example: true },
+                count: { type: 'integer', example: 2 },
+                users: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      _id: { type: 'string', example: '65e123456789abcdef012345' },
+                      name: { type: 'string', example: 'أحمد محمود' },
+                      email: { type: 'string', example: 'ahmed@example.com' },
+                      password: { type: 'string', example: '$2a$12$eXamPleHaShedPasSWorD...' },
+                      phone: { type: 'string', example: '01012345678' },
+                      role: { type: 'string', example: 'user' },
+                      avatar: { type: 'string', nullable: true, example: null },
+                      addresses: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            fullName: { type: 'string', example: 'أحمد محمود' },
+                            phone: { type: 'string', example: '01012345678' },
+                            city: { type: 'string', example: 'القاهرة' },
+                            address: { type: 'string', example: 'المعادي، شارع 9' },
+                            isDefault: { type: 'boolean', example: true },
+                          },
+                        },
+                      },
+                      createdAt: { type: 'string', example: '2026-08-23T01:00:00.000Z' },
+                      updatedAt: { type: 'string', example: '2026-08-23T01:00:00.000Z' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+swaggerSpec.paths['/api/users/all'] = swaggerSpec.paths['/api/users'];
+
 module.exports = swaggerSpec;
+
 
