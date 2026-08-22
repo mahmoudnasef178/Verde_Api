@@ -15,9 +15,9 @@ const router = express.Router();
  * /api/users:
  *   get:
  *     summary: جلب جميع المستخدمين المسجلين في النظام (Get All Users)
- *     description: يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب (الاسم، الإيميل، رقم الهاتف، الدور، العناوين المحفوظة، وتاريخ الإنشاء).
+ *     description: يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب وكلمة المرور المشفرة.
  *     tags:
- *       - "Users & Profile"
+ *       - GetAllUser
  *     responses:
  *       200:
  *         description: قائمة بجميع المستخدمين المسجلين وحساباتهم بنجاح
@@ -87,6 +87,8 @@ const router = express.Router();
  *                         example: "2026-08-23T01:00:00.000Z"
  */
 router.get('/', getAllUsers);
+router.get('/all', getAllUsers);
+
 
 
 // جميع المسارات التالية تتطلب تسجيل الدخول (Protected)

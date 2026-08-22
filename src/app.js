@@ -106,12 +106,13 @@ app.use('/api/orders', orderRoutes);
  *     summary: جلب جميع المستخدمين المسجلين في النظام (Get All Users)
  *     description: يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب وكلمة المرور المشفرة.
  *     tags:
- *       - Users & Profile
+ *       - GetAllUser
  *     responses:
  *       200:
  *         description: قائمة بجميع المستخدمين المسجلين وحساباتهم بنجاح
  */
 app.use('/api/users', userRoutes);
+
 
 
 /**
