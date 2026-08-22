@@ -10,6 +10,9 @@ const servers = serverUrl
   ? [{ url: serverUrl, description: 'سيرفر الإنتاج (Production)' }]
   : [{ url: '/', description: 'السيرفر الحالي (Current Server)' }];
 
+const routesPath = path.join(__dirname, '../routes/*.js').replace(/\\/g, '/');
+const appPath = path.join(__dirname, '../app.js').replace(/\\/g, '/');
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -62,10 +65,7 @@ const options = {
       },
     },
   },
-  apis: [
-    path.join(__dirname, '../routes/*.js'),
-    path.join(__dirname, '../app.js'),
-  ],
+  apis: [routesPath, appPath],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
