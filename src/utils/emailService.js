@@ -1,25 +1,6 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Create Gmail Transporter
- */
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // use STARTTLS
-    family: 4,     // force IPv4 — fix for Railway ENETUNREACH
-    auth: {
-      user: process.env.GMAIL_EMAIL || 'verdeperfume760@gmail.com',
-      pass: process.env.GMAIL_APP_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-};
-
-/**
  * Generate HTML Email Template for Order Confirmation
  */
 const generateOrderHtml = (order, userName) => {
@@ -129,7 +110,7 @@ const generateOrderHtml = (order, userName) => {
                 </td>
               </tr>
 
-              <!-- Shipping Address Box -->
+              <!-- Address Box -->
               <tr>
                 <td style="padding: 0 30px 25px;">
                   <div style="background-color: #0e160b; border: 1px solid #1e2c18; border-radius: 6px; padding: 15px 20px;">
@@ -143,7 +124,7 @@ const generateOrderHtml = (order, userName) => {
                 </td>
               </tr>
 
-              <!-- Support & Social Footer -->
+              <!-- Footer -->
               <tr>
                 <td align="center" style="padding: 25px 30px; background-color: #070c06; border-top: 1px solid #1a2914;">
                   <p style="color: #8a9985; font-size: 13px; margin: 0 0 15px; line-height: 1.5;">
@@ -168,34 +149,54 @@ const generateOrderHtml = (order, userName) => {
 };
 
 /**
- * Send Order Confirmation Email via Gmail SMTP
+ * Send Order Confirmation Email via Resend HTTP API
+ * Uses HTTPS (port 443) — works on Railway without SMTP port restrictions
  */
 const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
   try {
     if (!userEmail) {
-      console.log('⚠️ لم يتم تحديد البريد الإلكتروني');
+      console.log('⚠️ No user email provided');
       return { success: false, reason: 'No user email' };
     }
 
-    const transporter = createTransporter();
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.log('⚠️ RESEND_API_KEY not set in environment');
+      return { success: false, reason: 'No API key' };
+    }
+
     const htmlContent = generateOrderHtml(order, userName);
     const orderId = order._id.toString().slice(-6).toUpperCase();
 
-    const info = await transporter.sendMail({
-      from: '"VERDE PARFUMS" <verdeperfume760@gmail.com>',
-      to: userEmail,
-      subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
-      html: htmlContent,
+    // Use fetch (Node 18+) to call Resend HTTP API directly — no SMTP ports needed
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'VERDE PARFUMS <onboarding@resend.dev>',
+        to: [userEmail],
+        subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
+        html: htmlContent,
+      }),
     });
 
-    console.log(`✉️ تم إرسال بريد تأكيد الطلب بنجاح إلى ${userEmail} | MessageId: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('❌ Resend API error:', JSON.stringify(data));
+      return { success: false, error: data };
+    }
+
+    console.log(`✉️ Email sent successfully to ${userEmail} | ID: ${data.id}`);
+    return { success: true, id: data.id };
+
   } catch (err) {
-    console.error('❌ خطأ أثناء إرسال إيميل تأكيد الطلب:', err.message);
+    console.error('❌ Email send error:', err.message);
     return { success: false, error: err.message };
   }
 };
 
-module.exports = {
-  sendOrderConfirmationEmail,
-};
+module.exports = { sendOrderConfirmationEmail };
