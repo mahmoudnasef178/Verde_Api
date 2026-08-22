@@ -99,7 +99,20 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/orders', orderRoutes);
+/**
+ * @openapi
+ * /api/users:
+ *   get:
+ *     summary: جلب جميع المستخدمين المسجلين في النظام (Get All Users)
+ *     description: يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب وكلمة المرور المشفرة.
+ *     tags:
+ *       - Users & Profile
+ *     responses:
+ *       200:
+ *         description: قائمة بجميع المستخدمين المسجلين وحساباتهم بنجاح
+ */
 app.use('/api/users', userRoutes);
+
 
 /**
  * @openapi
