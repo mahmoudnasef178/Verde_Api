@@ -17,6 +17,7 @@ const OrderItemSchema = new mongoose.Schema(
 const ShippingAddressSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: [true, 'الاسم الكامل مطلوب'] },
+    email: { type: String, default: '' },
     phone: { type: String, required: [true, 'رقم الهاتف مطلوب'] },
     city: { type: String, required: [true, 'المدينة مطلوبة'] },
     address: { type: String, required: [true, 'العنوان التفصيلي مطلوب'] },

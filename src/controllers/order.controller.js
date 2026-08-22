@@ -57,9 +57,9 @@ const createOrder = async (req, res) => {
     await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] }).catch(() => {});
 
     // Send confirmation email asynchronously
-    const userEmail = req.user.email;
-    const userName = shippingAddress.fullName || req.user.name;
-    console.log(`📧 Attempting to send email to: ${userEmail} | GMAIL_EMAIL set: ${!!process.env.GMAIL_EMAIL} | GMAIL_APP_PASS set: ${!!process.env.GMAIL_APP_PASS}`);
+    const userEmail = req.body.email || shippingAddress.email || req.user?.email;
+    const userName = shippingAddress.fullName || req.user?.name;
+    console.log(`📧 Attempting to send confirmation email to customer: ${userEmail}`);
     sendOrderConfirmationEmail({ order, userEmail, userName }).then(result => {
       console.log('📧 Email result:', JSON.stringify(result));
     }).catch(err => {
