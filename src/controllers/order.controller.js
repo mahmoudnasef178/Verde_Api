@@ -36,23 +36,25 @@ const createOrder = async (req, res) => {
       }));
     }
 
-    const itemsPrice = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const totalPrice = itemsPrice + Number(shippingPrice);
+    const normalizedPaymentMethod = (paymentMethod || 'COD').toString().toUpperCase();
+
+    const itemsPrice = orderItems.reduce((acc, item) => acc + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
+    const totalPrice = itemsPrice + Number(shippingPrice || 0);
 
     const order = await Order.create({
       user: req.user._id,
       orderItems,
       shippingAddress,
-      paymentMethod,
+      paymentMethod: normalizedPaymentMethod,
       itemsPrice,
-      shippingPrice,
+      shippingPrice: Number(shippingPrice || 0),
       totalPrice,
-      isPaid: paymentMethod === 'CARD', // Marked paid if card, otherwise false for COD
-      paidAt: paymentMethod === 'CARD' ? new Date() : null,
+      isPaid: normalizedPaymentMethod === 'CARD', // Marked paid if card, otherwise false for COD
+      paidAt: normalizedPaymentMethod === 'CARD' ? new Date() : null,
     });
 
     // Clear user cart after placing order
-    await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] });
+    await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] }).catch(() => {});
 
     // Send confirmation email asynchronously
     const userEmail = req.user.email;
@@ -70,7 +72,7 @@ const createOrder = async (req, res) => {
     console.error('Create Order Error:', error);
     res.status(500).json({
       success: false,
-      message: 'خطأ أثناء إنشاء الطلب',
+      message: error.message || 'خطأ أثناء إنشاء الطلب',
     });
   }
 };

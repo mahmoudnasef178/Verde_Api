@@ -3,9 +3,8 @@ const mongoose = require('mongoose');
 const OrderItemSchema = new mongoose.Schema(
   {
     product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
-      required: true,
+      type: mongoose.Schema.Types.Mixed,
+      required: false,
     },
     name: { type: String, required: true },
     price: { type: Number, required: true },
@@ -40,7 +39,7 @@ const OrderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['COD', 'CARD'],
+      enum: ['COD', 'CARD', 'WALLET', 'VALU', 'cod', 'card', 'wallet', 'valu'],
       default: 'COD',
     },
     itemsPrice: {
