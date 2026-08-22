@@ -18,7 +18,7 @@ const options = {
     openapi: '3.0.0',
     info: {
       title: '🌿 Verde Parfums REST API',
-      version: '1.0.0',
+      version: '1.0.2',
       description: 'المستندات التفاعلية الخاصة بـ Verde Parfums API — تعمل أونلاين بالكامل.',
       contact: {
         name: 'Verde Support',
