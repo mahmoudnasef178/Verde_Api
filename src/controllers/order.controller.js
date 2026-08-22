@@ -59,8 +59,11 @@ const createOrder = async (req, res) => {
     // Send confirmation email asynchronously
     const userEmail = req.user.email;
     const userName = shippingAddress.fullName || req.user.name;
-    sendOrderConfirmationEmail({ order, userEmail, userName }).catch(err => {
-      console.error('Failed to trigger order confirmation email:', err);
+    console.log(`📧 Attempting to send email to: ${userEmail} | GMAIL_EMAIL set: ${!!process.env.GMAIL_EMAIL} | GMAIL_APP_PASS set: ${!!process.env.GMAIL_APP_PASS}`);
+    sendOrderConfirmationEmail({ order, userEmail, userName }).then(result => {
+      console.log('📧 Email result:', JSON.stringify(result));
+    }).catch(err => {
+      console.error('📧 Failed to send order confirmation email:', err.message);
     });
 
     res.status(201).json({
