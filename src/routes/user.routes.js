@@ -15,13 +15,76 @@ const router = express.Router();
  * /api/users:
  *   get:
  *     summary: جلب جميع المستخدمين المسجلين في النظام (Get All Users)
+ *     description: يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب (الاسم، الإيميل، رقم الهاتف، الدور، العناوين المحفوظة، وتاريخ الإنشاء).
  *     tags:
  *       - Users & Profile
  *     responses:
  *       200:
- *         description: قائمة بجميع المستخدمين المسجلين (بدون كلمات المرور)
+ *         description: قائمة بجميع المستخدمين المسجلين وحساباتهم بنجاح
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 2
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "65e123456789abcdef012345"
+ *                       name:
+ *                         type: string
+ *                         example: "أحمد محمود"
+ *                       email:
+ *                         type: string
+ *                         example: "ahmed@example.com"
+ *                       phone:
+ *                         type: string
+ *                         example: "01012345678"
+ *                       role:
+ *                         type: string
+ *                         example: "user"
+ *                       avatar:
+ *                         type: string
+ *                         nullable: true
+ *                         example: null
+ *                       addresses:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             fullName:
+ *                               type: string
+ *                               example: "أحمد محمود"
+ *                             phone:
+ *                               type: string
+ *                               example: "01012345678"
+ *                             city:
+ *                               type: string
+ *                               example: "القاهرة"
+ *                             address:
+ *                               type: string
+ *                               example: "المعادي، شارع 9"
+ *                             isDefault:
+ *                               type: boolean
+ *                               example: true
+ *                       createdAt:
+ *                         type: string
+ *                         example: "2026-08-23T01:00:00.000Z"
+ *                       updatedAt:
+ *                         type: string
+ *                         example: "2026-08-23T01:00:00.000Z"
  */
 router.get('/', getAllUsers);
+
 
 // جميع المسارات التالية تتطلب تسجيل الدخول (Protected)
 router.use(protect);
