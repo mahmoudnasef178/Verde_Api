@@ -6,7 +6,7 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  seedProducts,
+  clearAllProducts,
   createProductReview,
 } = require('../controllers/product.controller');
 const { protect } = require('../middleware/auth.middleware');
@@ -50,22 +50,19 @@ router.get('/', getAllProducts);
 
 /**
  * @openapi
- * /api/products/seed:
- *   post:
- *     summary: تهيئة المنتجات والعطور الأولية (Seed Initial Fragrances)
+ * /api/products/clear:
+ *   delete:
+ *     summary: مسح جميع المنتجات من قاعدة البيانات (Delete All Products)
  *     tags:
  *       - Products
- *     parameters:
- *       - in: query
- *         name: force
- *         schema:
- *           type: boolean
- *         description: إعادة تعيين ومسح المنتجات القديمة ثم الإضافة
  *     responses:
- *       201:
- *         description: تم إضافة العطور إلى قاعدة البيانات
+ *       200:
+ *         description: تم مسح كافة المنتجات بنجاح
  */
-router.post('/seed', seedProducts);
+router.delete('/clear', clearAllProducts);
+router.delete('/clear/all', clearAllProducts);
+
+
 
 /**
  * @openapi

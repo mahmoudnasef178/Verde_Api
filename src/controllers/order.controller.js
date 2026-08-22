@@ -1,6 +1,7 @@
 const Order = require('../models/Order.model');
 const Cart = require('../models/Cart.model');
 const Product = require('../models/Product.model');
+const { sendOrderConfirmationEmail } = require('../utils/emailService');
 
 // @route   POST /api/orders
 // @desc    Create new order (from cart or items array)
@@ -52,6 +53,13 @@ const createOrder = async (req, res) => {
 
     // Clear user cart after placing order
     await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] });
+
+    // Send confirmation email asynchronously
+    const userEmail = req.user.email;
+    const userName = shippingAddress.fullName || req.user.name;
+    sendOrderConfirmationEmail({ order, userEmail, userName }).catch(err => {
+      console.error('Failed to trigger order confirmation email:', err);
+    });
 
     res.status(201).json({
       success: true,
