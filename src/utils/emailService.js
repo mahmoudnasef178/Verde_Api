@@ -1,7 +1,5 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 /**
  * Generate HTML Email Template for Order Confirmation
  */
@@ -164,6 +162,9 @@ const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
       console.log('⚠️ RESEND_API_KEY غير موجود في .env');
       return { success: false, reason: 'No API key' };
     }
+
+    // Lazy init: create Resend instance only when needed (after env vars are loaded)
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const htmlContent = generateOrderHtml(order, userName);
     const orderId = order._id.toString().slice(-6).toUpperCase();
