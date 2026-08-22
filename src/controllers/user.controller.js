@@ -154,9 +154,31 @@ const getAddresses = async (req, res) => {
   }
 };
 
+// @route   GET /api/users
+// @desc    Get all registered users
+// @access  Protected
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    console.error('Get All Users Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'خطأ أثناء جلب قائمة المستخدمين',
+    });
+  }
+};
+
 module.exports = {
+  getAllUsers,
   updateProfile,
   changePassword,
   addAddress,
   getAddresses,
 };
+

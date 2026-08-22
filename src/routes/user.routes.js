@@ -1,5 +1,6 @@
 const express = require('express');
 const {
+  getAllUsers,
   updateProfile,
   changePassword,
   addAddress,
@@ -9,7 +10,23 @@ const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
+/**
+ * @openapi
+ * /api/users:
+ *   get:
+ *     summary: جلب جميع المستخدمين المسجلين في النظام (Get All Users)
+ *     tags:
+ *       - Users & Profile
+ *     responses:
+ *       200:
+ *         description: قائمة بجميع المستخدمين المسجلين (بدون كلمات المرور)
+ */
+router.get('/', getAllUsers);
+
+// جميع المسارات التالية تتطلب تسجيل الدخول (Protected)
 router.use(protect);
+
+
 
 /**
  * @openapi
