@@ -1,28 +1,6 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-/**
- * Create Nodemailer Transporter
- */
-const createTransporter = () => {
-  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT || '465', 10);
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-
-  if (!user || !pass) {
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465, // true for 465, false for other ports
-    auth: {
-      user,
-      pass,
-    },
-  });
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Generate HTML Email Template for Order Confirmation
@@ -67,8 +45,8 @@ const generateOrderHtml = (order, userName) => {
       <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #050804; padding: 30px 10px;">
         <tr>
           <td align="center">
-            <table width="100%" max-width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #0b1108; border: 1px solid #22301c; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-              
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #0b1108; border: 1px solid #22301c; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+
               <!-- Header Banner -->
               <tr>
                 <td align="center" style="padding: 35px 20px 25px; background: linear-gradient(180deg, #111a0d 0%, #0b1108 100%); border-bottom: 1px solid #22301c;">
@@ -140,9 +118,9 @@ const generateOrderHtml = (order, userName) => {
                   <div style="background-color: #0e160b; border: 1px solid #1e2c18; border-radius: 6px; padding: 15px 20px;">
                     <h4 style="color: #a8d5b5; margin: 0 0 10px; font-size: 14px;">📍 عنوان التوصيل:</h4>
                     <p style="margin: 0; color: #d1dbcd; font-size: 13px; line-height: 1.6;">
-                      <strong>${order.shippingAddress?.fullName || userName}</strong><br />
-                      📞 ${order.shippingAddress?.phone || ''}<br />
-                      🏛️ ${order.shippingAddress?.city || ''} - ${order.shippingAddress?.address || ''}
+                      <strong>${order.shippingAddress && order.shippingAddress.fullName ? order.shippingAddress.fullName : userName}</strong><br />
+                      📞 ${order.shippingAddress && order.shippingAddress.phone ? order.shippingAddress.phone : ''}<br />
+                      🏛️ ${order.shippingAddress && order.shippingAddress.city ? order.shippingAddress.city : ''} - ${order.shippingAddress && order.shippingAddress.address ? order.shippingAddress.address : ''}
                     </p>
                   </div>
                 </td>
@@ -173,38 +151,40 @@ const generateOrderHtml = (order, userName) => {
 };
 
 /**
- * Send Order Confirmation Email
+ * Send Order Confirmation Email via Resend
  */
 const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
   try {
-    const transporter = createTransporter();
-
     if (!userEmail) {
       console.log('⚠️ لم يتم تحديد البريد الإلكتروني لإرسال تأكيد الطلب');
       return { success: false, reason: 'No user email' };
     }
 
-    const htmlContent = generateOrderHtml(order, userName);
-    const orderId = order._id.toString().slice(-6).toUpperCase();
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || '"VERDE PARFUMS" <no-reply@verde-parfums.com>',
-      to: userEmail,
-      subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
-      html: htmlContent,
-    };
-
-    if (!transporter) {
-      console.log(`ℹ️ [Email Simulation Mode] تم تجهيز رسالة تأكيد الطلب (#VRD-${orderId}) إلى: ${userEmail}`);
-      console.log(`💡 تلميح: لإرسال البريد الإلكتروني فعلياً، أضف بيانات SMTP (EMAIL_USER & EMAIL_PASS) في ملف .env`);
-      return { success: true, simulated: true };
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⚠️ RESEND_API_KEY غير موجود في .env');
+      return { success: false, reason: 'No API key' };
     }
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✉️ تم إرسال بريد تأكيد الطلب بنجاح إلى ${userEmail} | MessageId: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('❌ خطأ أثناء إرسال إيميل تأكيد الطلب:', error.message);
-    return { success: false, error: error.message };
+    const htmlContent = generateOrderHtml(order, userName);
+    const orderId = order._id.toString().slice(-6).toUpperCase();
+
+    const { data, error } = await resend.emails.send({
+      from: 'VERDE PARFUMS <onboarding@resend.dev>',
+      to: [userEmail],
+      subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('❌ Resend Error:', JSON.stringify(error));
+      return { success: false, error };
+    }
+
+    console.log(`✉️ تم إرسال بريد تأكيد الطلب بنجاح إلى ${userEmail} | ID: ${data.id}`);
+    return { success: true, id: data.id };
+  } catch (err) {
+    console.error('❌ خطأ أثناء إرسال إيميل تأكيد الطلب:', err.message);
+    return { success: false, error: err.message };
   }
 };
 
