@@ -1,4 +1,17 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
+
+/**
+ * Create Gmail Transporter
+ */
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER || 'verdeperfume760@gmail.com',
+      pass: process.env.GMAIL_PASS,
+    },
+  });
+};
 
 /**
  * Generate HTML Email Template for Order Confirmation
@@ -149,40 +162,28 @@ const generateOrderHtml = (order, userName) => {
 };
 
 /**
- * Send Order Confirmation Email via Resend
+ * Send Order Confirmation Email via Gmail SMTP
  */
 const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
   try {
     if (!userEmail) {
-      console.log('⚠️ لم يتم تحديد البريد الإلكتروني لإرسال تأكيد الطلب');
+      console.log('⚠️ لم يتم تحديد البريد الإلكتروني');
       return { success: false, reason: 'No user email' };
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      console.log('⚠️ RESEND_API_KEY غير موجود في .env');
-      return { success: false, reason: 'No API key' };
-    }
-
-    // Lazy init: create Resend instance only when needed (after env vars are loaded)
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
+    const transporter = createTransporter();
     const htmlContent = generateOrderHtml(order, userName);
     const orderId = order._id.toString().slice(-6).toUpperCase();
 
-    const { data, error } = await resend.emails.send({
-      from: 'VERDE PARFUMS <onboarding@resend.dev>',
-      to: [userEmail],
+    const info = await transporter.sendMail({
+      from: '"VERDE PARFUMS" <verdeperfume760@gmail.com>',
+      to: userEmail,
       subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
       html: htmlContent,
     });
 
-    if (error) {
-      console.error('❌ Resend Error:', JSON.stringify(error));
-      return { success: false, error };
-    }
-
-    console.log(`✉️ تم إرسال بريد تأكيد الطلب بنجاح إلى ${userEmail} | ID: ${data.id}`);
-    return { success: true, id: data.id };
+    console.log(`✉️ تم إرسال بريد تأكيد الطلب بنجاح إلى ${userEmail} | MessageId: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error('❌ خطأ أثناء إرسال إيميل تأكيد الطلب:', err.message);
     return { success: false, error: err.message };
