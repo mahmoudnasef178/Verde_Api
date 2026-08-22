@@ -126,10 +126,6 @@ const generateOrderHtml = (order, userName) => {
                       <td style="color: #8a9985; font-size: 14px; padding-bottom: 8px;">مجموع المنتجات:</td>
                       <td align="left" style="color: #fafaf8; font-size: 14px; padding-bottom: 8px;">${(order.itemsPrice || 0).toLocaleString('ar-EG')} ج.م</td>
                     </tr>
-                    <tr>
-                      <td style="color: #8a9985; font-size: 14px; padding-bottom: 8px;">مصاريف الشحن:</td>
-                      <td align="left" style="color: #fafaf8; font-size: 14px; padding-bottom: 8px;">${(order.shippingPrice || 0) === 0 ? 'مجاناً 🎉' : `${(order.shippingPrice).toLocaleString('ar-EG')} ج.م`}</td>
-                    </tr>
                     <tr style="border-top: 1px solid #22301c;">
                       <td style="color: #a8d5b5; font-size: 17px; font-weight: bold; padding-top: 10px;">الإجمالي الكلي:</td>
                       <td align="left" style="color: #5aad78; font-size: 20px; font-weight: bold; padding-top: 10px;">${(order.totalPrice || 0).toLocaleString('ar-EG')} ج.م</td>
