@@ -5,10 +5,16 @@ const nodemailer = require('nodemailer');
  */
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // use STARTTLS
+    family: 4,     // force IPv4 — fix for Railway ENETUNREACH
     auth: {
       user: process.env.GMAIL_EMAIL || 'verdeperfume760@gmail.com',
       pass: process.env.GMAIL_APP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
     },
   });
 };
