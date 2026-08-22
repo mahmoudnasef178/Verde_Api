@@ -1,5 +1,3 @@
-const nodemailer = require('nodemailer');
-
 /**
  * Generate HTML Email Template for Order Confirmation
  */
