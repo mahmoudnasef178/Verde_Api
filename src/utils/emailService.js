@@ -147,8 +147,8 @@ const generateOrderHtml = (order, userName) => {
 };
 
 /**
- * Send Order Confirmation Email via Resend HTTP API
- * Uses HTTPS (port 443) — works on Railway without SMTP port restrictions
+ * Send Order Confirmation Email via Brevo HTTP API
+ * Uses HTTPS (port 443) — works seamlessly without port restrictions and can send to ANY recipient
  */
 const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
   try {
@@ -157,42 +157,51 @@ const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
       return { success: false, reason: 'No user email' };
     }
 
-    const apiKey = process.env.RESEND_API_KEY;
+    const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) {
-      console.log('⚠️ RESEND_API_KEY not set in environment');
+      console.log('⚠️ BREVO_API_KEY not set in environment');
       return { success: false, reason: 'No API key' };
     }
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'verdeperfume760@gmail.com';
 
     const htmlContent = generateOrderHtml(order, userName);
     const orderId = order._id.toString().slice(-6).toUpperCase();
 
-    // Use fetch (Node 18+) to call Resend HTTP API directly — no SMTP ports needed
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'VERDE PARFUMS <onboarding@resend.dev>',
-        to: [userEmail],
+        sender: {
+          name: 'VERDE PARFUMS',
+          email: senderEmail,
+        },
+        to: [
+          {
+            email: userEmail,
+            name: userName || 'عميلنا العزيز',
+          },
+        ],
         subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
-        html: htmlContent,
+        htmlContent: htmlContent,
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('❌ Resend API error:', JSON.stringify(data));
+      console.error('❌ Brevo API error:', JSON.stringify(data));
       return { success: false, error: data };
     }
 
-    console.log(`✉️ Email sent successfully to ${userEmail} | ID: ${data.id}`);
-    return { success: true, id: data.id };
+    console.log(`✉️ Brevo email sent successfully to ${userEmail} | MessageId: ${data.messageId || JSON.stringify(data)}`);
+    return { success: true, messageId: data.messageId };
 
   } catch (err) {
-    console.error('❌ Email send error:', err.message);
+    console.error('❌ Brevo Email send error:', err.message);
     return { success: false, error: err.message };
   }
 };
