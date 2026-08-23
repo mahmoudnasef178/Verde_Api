@@ -4,12 +4,10 @@ const cors = require('cors');
 const swaggerSpec = require('./config/swagger');
 
 // Route imports
-const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
 const cartRoutes = require('./routes/cart.routes');
 const favoriteRoutes = require('./routes/favorite.routes');
 const orderRoutes = require('./routes/order.routes');
-const userRoutes = require('./routes/user.routes');
 
 const app = express();
 
@@ -94,24 +92,10 @@ app.get('/api-docs.json', (req, res) => {
 // ─────────────────────────────────────────────
 // Routes
 // ─────────────────────────────────────────────
-app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/orders', orderRoutes);
-/**
- * @openapi
- * /api/users:
- *   get:
- *     summary: جلب جميع المستخدمين المسجلين في النظام (Get All Users)
- *     description: يرجع قائمة بجميع حسابات المستخدمين المسجلين مع كافة تفاصيل الحساب وكلمة المرور المشفرة.
- *     tags:
- *       - GetAllUser
- *     responses:
- *       200:
- *         description: قائمة بجميع المستخدمين المسجلين وحساباتهم بنجاح
- */
-app.use('/api/users', userRoutes);
 
 
 

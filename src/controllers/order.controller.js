@@ -17,23 +17,27 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // If orderItems not provided, fetch items from user's Cart
+    // If orderItems not provided, fetch items from user's Cart if user is available
     if (!orderItems || orderItems.length === 0) {
-      const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
-      if (!cart || cart.items.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'سلة التسوق فارغة، تعذّر إنشاء الطلب',
-        });
+      if (req.user?._id) {
+        const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
+        if (cart && cart.items.length > 0) {
+          orderItems = cart.items.map(item => ({
+            product: item.product._id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            img: item.product.img,
+          }));
+        }
       }
+    }
 
-      orderItems = cart.items.map(item => ({
-        product: item.product._id,
-        name: item.product.name,
-        price: item.product.price,
-        quantity: item.quantity,
-        img: item.product.img,
-      }));
+    if (!orderItems || orderItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'سلة التسوق فارغة، تعذّر إنشاء الطلب',
+      });
     }
 
     const normalizedPaymentMethod = (paymentMethod || 'COD').toString().toUpperCase();
@@ -42,7 +46,7 @@ const createOrder = async (req, res) => {
     const totalPrice = itemsPrice + Number(shippingPrice || 0);
 
     const order = await Order.create({
-      user: req.user._id,
+      user: req.user ? req.user._id : null,
       orderItems,
       shippingAddress,
       paymentMethod: normalizedPaymentMethod,
@@ -53,8 +57,10 @@ const createOrder = async (req, res) => {
       paidAt: normalizedPaymentMethod === 'CARD' ? new Date() : null,
     });
 
-    // Clear user cart after placing order
-    await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] }).catch(() => {});
+    // Clear user cart if user exists
+    if (req.user?._id) {
+      await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] }).catch(() => {});
+    }
 
     // Send confirmation email asynchronously
     const userEmail = req.body.email || shippingAddress.email || req.user?.email;
@@ -81,11 +87,12 @@ const createOrder = async (req, res) => {
 };
 
 // @route   GET /api/orders/my-orders
-// @desc    Get order history for current logged in user
-// @access  Protected
+// @desc    Get order history for current user (if logged in)
+// @access  Public
 const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const userId = req.user?._id;
+    const orders = userId ? await Order.find({ user: userId }).sort({ createdAt: -1 }) : [];
     res.status(200).json({
       success: true,
       count: orders.length,
@@ -102,7 +109,7 @@ const getUserOrders = async (req, res) => {
 
 // @route   GET /api/orders/:id
 // @desc    Get single order by ID
-// @access  Protected
+// @access  Public
 const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email phone');
@@ -113,8 +120,8 @@ const getOrderById = async (req, res) => {
       });
     }
 
-    // Check ownership or admin role
-    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    // Check ownership if user context exists
+    if (req.user && order.user && order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'غير مصرح لك بالاطلاع على هذا الطلب',

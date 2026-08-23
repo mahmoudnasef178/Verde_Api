@@ -9,7 +9,6 @@ const {
   clearAllProducts,
   createProductReview,
 } = require('../controllers/product.controller');
-const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -62,8 +61,6 @@ router.get('/', getAllProducts);
 router.delete('/clear', clearAllProducts);
 router.delete('/clear/all', clearAllProducts);
 
-
-
 /**
  * @openapi
  * /api/products/slug/{slug}:
@@ -114,8 +111,6 @@ router.get('/:id', getProductById);
  *     summary: إضافة عطر/منتج جديد (Create Product)
  *     tags:
  *       - Products
- *     security:
- *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -152,7 +147,7 @@ router.get('/:id', getProductById);
  *       201:
  *         description: تم إضافة المنتج بنجاح
  */
-router.post('/', protect, createProduct);
+router.post('/', createProduct);
 
 /**
  * @openapi
@@ -161,8 +156,6 @@ router.post('/', protect, createProduct);
  *     summary: تحديث بيانات منتج (Update Product)
  *     tags:
  *       - Products
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -173,7 +166,7 @@ router.post('/', protect, createProduct);
  *       200:
  *         description: تم تعديل بيانات المنتج بنجاح
  */
-router.put('/:id', protect, updateProduct);
+router.put('/:id', updateProduct);
 
 /**
  * @openapi
@@ -182,8 +175,6 @@ router.put('/:id', protect, updateProduct);
  *     summary: حذف منتج (Delete Product)
  *     tags:
  *       - Products
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -194,7 +185,7 @@ router.put('/:id', protect, updateProduct);
  *       200:
  *         description: تم حذف المنتج بنجاح
  */
-router.delete('/:id', protect, deleteProduct);
+router.delete('/:id', deleteProduct);
 
 /**
  * @openapi
@@ -203,8 +194,6 @@ router.delete('/:id', protect, deleteProduct);
  *     summary: إضافة تقييم ومراجعة للمنتج (Add Product Review)
  *     tags:
  *       - Products
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -235,6 +224,6 @@ router.delete('/:id', protect, deleteProduct);
  *       400:
  *         description: تم تقييم المنتج مسبقاً من نفس المستخدم
  */
-router.post('/:id/reviews', protect, createProductReview);
+router.post('/:id/reviews', createProductReview);
 
 module.exports = router;

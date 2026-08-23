@@ -21,10 +21,17 @@ const formatCart = (cart) => {
 };
 
 // @route   GET /api/cart
-// @desc    Get current user's active cart
-// @access  Protected
+// @desc    Get active cart
+// @access  Public
 const getCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return res.status(200).json({
+        success: true,
+        cart: { _id: null, items: [], totalItems: 0, subtotal: 0 },
+      });
+    }
+
     let cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
 
     if (!cart) {
@@ -45,8 +52,8 @@ const getCart = async (req, res) => {
 };
 
 // @route   POST /api/cart
-// @desc    Add item to cart or increment quantity
-// @access  Protected
+// @desc    Add item to cart
+// @access  Public
 const addToCart = async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
@@ -63,6 +70,14 @@ const addToCart = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'المنتج غير موجود',
+      });
+    }
+
+    if (!req.user?._id) {
+      return res.status(200).json({
+        success: true,
+        message: 'تم إضافة المنتج إلى السلة بنجاح 🛒',
+        cart: { items: [{ product: productExists, quantity: Number(quantity) }], totalItems: Number(quantity), subtotal: productExists.price * Number(quantity) },
       });
     }
 
@@ -100,7 +115,7 @@ const addToCart = async (req, res) => {
 
 // @route   PUT /api/cart/item
 // @desc    Update quantity of a specific item in cart
-// @access  Protected
+// @access  Public
 const updateCartItem = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
@@ -109,6 +124,13 @@ const updateCartItem = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'بيانات المنتج والكمية مطلوبة',
+      });
+    }
+
+    if (!req.user?._id) {
+      return res.status(200).json({
+        success: true,
+        message: 'تم تحديث سلة التسوق بنجاح',
       });
     }
 
@@ -152,10 +174,17 @@ const updateCartItem = async (req, res) => {
 
 // @route   DELETE /api/cart/item/:productId
 // @desc    Remove specific item from cart
-// @access  Protected
+// @access  Public
 const removeFromCart = async (req, res) => {
   try {
     const { productId } = req.params;
+
+    if (!req.user?._id) {
+      return res.status(200).json({
+        success: true,
+        message: 'تم حذف المنتج من السلة',
+      });
+    }
 
     let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
@@ -185,9 +214,16 @@ const removeFromCart = async (req, res) => {
 
 // @route   DELETE /api/cart
 // @desc    Clear all items in cart
-// @access  Protected
+// @access  Public
 const clearCart = async (req, res) => {
   try {
+    if (!req.user?._id) {
+      return res.status(200).json({
+        success: true,
+        message: 'تم تفريغ سلة التسوق بنجاح',
+      });
+    }
+
     let cart = await Cart.findOne({ user: req.user._id });
     if (cart) {
       cart.items = [];

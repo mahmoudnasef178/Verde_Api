@@ -5,13 +5,7 @@ const {
   getOrderById,
   getAllOrders,
   updateOrderStatus,
-} = require('../controllers/order.controller');
-const { protect } = require('../middleware/auth.middleware');
-
 const router = express.Router();
-
-// Apply JWT authentication middleware to all order endpoints
-router.use(protect);
 
 /**
  * @openapi

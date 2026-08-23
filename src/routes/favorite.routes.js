@@ -4,13 +4,7 @@ const {
   addFavorite,
   toggleFavorite,
   removeFavorite,
-} = require('../controllers/favorite.controller');
-const { protect } = require('../middleware/auth.middleware');
-
 const router = express.Router();
-
-// Apply JWT protection middleware to all favorite endpoints
-router.use(protect);
 
 /**
  * @openapi

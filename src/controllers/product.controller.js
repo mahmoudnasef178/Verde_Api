@@ -212,22 +212,24 @@ const createProductReview = async (req, res) => {
       });
     }
 
-    const alreadyReviewed = product.reviews.find(
-      r => r.user.toString() === req.user._id.toString()
-    );
+    if (req.user?._id) {
+      const alreadyReviewed = product.reviews.find(
+        r => r.user && r.user.toString() === req.user._id.toString()
+      );
 
-    if (alreadyReviewed) {
-      return res.status(400).json({
-        success: false,
-        message: 'لقد قمت بتقييم هذا العطر من قبل',
-      });
+      if (alreadyReviewed) {
+        return res.status(400).json({
+          success: false,
+          message: 'لقد قمت بتقييم هذا العطر من قبل',
+        });
+      }
     }
 
     const review = {
-      name: req.user.name,
+      name: req.body.name || req.user?.name || 'عميل فيردي',
       rating: Number(rating),
       comment,
-      user: req.user._id,
+      user: req.user ? req.user._id : null,
     };
 
     product.reviews.push(review);

@@ -5,13 +5,7 @@ const {
   updateCartItem,
   removeFromCart,
   clearCart,
-} = require('../controllers/cart.controller');
-const { protect } = require('../middleware/auth.middleware');
-
 const router = express.Router();
-
-// Apply JWT protection middleware to all cart endpoints
-router.use(protect);
 
 /**
  * @openapi
