@@ -62,16 +62,17 @@ const createOrder = async (req, res) => {
       await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] }).catch(() => {});
     }
 
-    // Send confirmation email asynchronously to the shipping email entered by the customer
-    const userEmail = (shippingAddress?.email || req.body?.email || req.user?.email || '').trim();
+    // Send confirmation email to the shipping email entered by the customer
+    const userEmail = (shippingAddress?.email || req.body?.email || req.body?.shippingAddress?.email || req.user?.email || '').trim();
     const userName = shippingAddress?.fullName || req.user?.name || 'عميل فيردي';
     console.log(`📧 Attempting to send confirmation email to customer: ${userEmail}`);
     if (userEmail) {
-      sendOrderConfirmationEmail({ order, userEmail, userName }).then(result => {
-        console.log('📧 Email result:', JSON.stringify(result));
-      }).catch(err => {
+      try {
+        const emailResult = await sendOrderConfirmationEmail({ order, userEmail, userName });
+        console.log('📧 Email result:', JSON.stringify(emailResult));
+      } catch (err) {
         console.error('📧 Failed to send order confirmation email:', err.message);
-      });
+      }
     } else {
       console.warn('⚠️ No shipping email address provided for order confirmation');
     }
