@@ -4,6 +4,8 @@ const {
   addFavorite,
   toggleFavorite,
   removeFavorite,
+} = require('../controllers/favorite.controller');
+
 const router = express.Router();
 
 /**

@@ -5,6 +5,8 @@ const {
   getOrderById,
   getAllOrders,
   updateOrderStatus,
+} = require('../controllers/order.controller');
+
 const router = express.Router();
 
 /**
