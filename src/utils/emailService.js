@@ -146,9 +146,44 @@ const generateOrderHtml = (order, userName) => {
   `;
 };
 
+const nodemailer = require('nodemailer');
+
+const sendViaNodemailer = async (userEmail, userName, subject, htmlContent) => {
+  try {
+    const gmailUser = process.env.GMAIL_USER || 'verdeperfume760@gmail.com';
+    const gmailPass = process.env.GMAIL_PASS || 'cnmpxyLktqiufbgh';
+
+    if (!gmailUser || !gmailPass) {
+      console.log('⚠️ GMAIL_USER/GMAIL_PASS not configured');
+      return { success: false, reason: 'No Gmail credentials' };
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
+      },
+    });
+
+    const mailOptions = {
+      from: `"VERDE PARFUMS" <${gmailUser}>`,
+      to: userEmail,
+      subject: subject,
+      html: htmlContent,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✉️ Gmail SMTP email sent successfully to ${userEmail} | MessageId: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error('❌ Gmail SMTP error:', err.message);
+    return { success: false, error: err.message };
+  }
+};
+
 /**
- * Send Order Confirmation Email via Brevo HTTP API
- * Uses HTTPS (port 443) — works seamlessly without port restrictions and can send to ANY recipient
+ * Send Order Confirmation Email via Brevo HTTP API, with Nodemailer Gmail SMTP fallback
  */
 const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
   try {
@@ -157,51 +192,56 @@ const sendOrderConfirmationEmail = async ({ order, userEmail, userName }) => {
       return { success: false, reason: 'No user email' };
     }
 
-    const apiKey = process.env.BREVO_API_KEY;
-    if (!apiKey) {
-      console.log('⚠️ BREVO_API_KEY not set in environment');
-      return { success: false, reason: 'No API key' };
-    }
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'verdeperfume760@gmail.com';
-
     const htmlContent = generateOrderHtml(order, userName);
     const orderId = order._id.toString().slice(-6).toUpperCase();
+    const subject = `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`;
 
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'api-key': apiKey,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        sender: {
-          name: 'VERDE PARFUMS',
-          email: senderEmail,
-        },
-        to: [
-          {
-            email: userEmail,
-            name: userName || 'عميلنا العزيز',
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'verdeperfume760@gmail.com';
+
+    if (apiKey) {
+      try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'api-key': apiKey,
+            'content-type': 'application/json',
           },
-        ],
-        subject: `🌿 تم استلام طلبك بنجاح | VERDE PARFUMS (#VRD-${orderId})`,
-        htmlContent: htmlContent,
-      }),
-    });
+          body: JSON.stringify({
+            sender: {
+              name: 'VERDE PARFUMS',
+              email: senderEmail,
+            },
+            to: [
+              {
+                email: userEmail,
+                name: userName || 'عميلنا العزيز',
+              },
+            ],
+            subject: subject,
+            htmlContent: htmlContent,
+          }),
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (!response.ok) {
-      console.error('❌ Brevo API error:', JSON.stringify(data));
-      return { success: false, error: data };
+        if (response.ok) {
+          console.log(`✉️ Brevo email sent successfully to ${userEmail} | MessageId: ${data.messageId || JSON.stringify(data)}`);
+          return { success: true, messageId: data.messageId };
+        } else {
+          console.warn('⚠️ Brevo API returned error, falling back to Gmail SMTP:', JSON.stringify(data));
+        }
+      } catch (brevoErr) {
+        console.warn('⚠️ Brevo API failed, falling back to Gmail SMTP:', brevoErr.message);
+      }
     }
 
-    console.log(`✉️ Brevo email sent successfully to ${userEmail} | MessageId: ${data.messageId || JSON.stringify(data)}`);
-    return { success: true, messageId: data.messageId };
+    // Fallback to Gmail SMTP via Nodemailer
+    return await sendViaNodemailer(userEmail, userName, subject, htmlContent);
 
   } catch (err) {
-    console.error('❌ Brevo Email send error:', err.message);
+    console.error('❌ Email send error:', err.message);
     return { success: false, error: err.message };
   }
 };
