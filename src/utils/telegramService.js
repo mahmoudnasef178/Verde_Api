@@ -86,7 +86,8 @@ const formatOrderMessage = (order) => {
   const paymentMap = {
     COD: '💵 الدفع عند الاستلام',
     CARD: '💳 بطاقة ائتمان',
-    WALLET: '📱 محفظة إلكترونية',
+    WALLET: '📱 فودافون كاش (Vodafone Cash)',
+    VODAFONE_CASH: '📱 فودافون كاش (Vodafone Cash)',
     VALU: '🏦 فاليو',
   };
   const paymentDisplay = paymentMap[(paymentMethod || '').toUpperCase()] || paymentMethod || 'COD';
