@@ -2,6 +2,7 @@ const Order = require('../models/Order.model');
 const Cart = require('../models/Cart.model');
 const Product = require('../models/Product.model');
 const { sendOrderConfirmationEmail } = require('../utils/emailService');
+const { sendOrderNotification } = require('../utils/telegramService');
 
 // @route   POST /api/orders
 // @desc    Create new order (from cart or items array)
@@ -61,6 +62,12 @@ const createOrder = async (req, res) => {
     if (req.user?._id) {
       await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] }).catch(() => {});
     }
+
+    // Send Telegram notification to admin
+    console.log('📨 Sending Telegram order notification to admin...');
+    sendOrderNotification(order).catch((err) =>
+      console.error('📨 Telegram notification failed (non-blocking):', err.message)
+    );
 
     // Send confirmation email to the shipping email entered by the customer
     const userEmail = (shippingAddress?.email || req.body?.email || req.body?.shippingAddress?.email || req.user?.email || '').trim();
