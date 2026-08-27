@@ -109,6 +109,10 @@ const formatOrderMessage = (order) => {
     })
     .join('\n');
 
+  const discountText = order.discount && order.discount > 0
+    ? `\n• خصم الكوبون (${order.couponCode || 'خصم'}): -${Number(order.discount).toLocaleString('ar-EG')} ج`
+    : '';
+
   return `🌿 *طلب جديد — Verde Parfums*
 ━━━━━━━━━━━━━━━━━━━
 
@@ -126,7 +130,7 @@ ${itemsText}
 
 ━━━━━━━━━━━━━━━━━━━
 💰 *ملخص التكاليف:*
-• المنتجات: ${Number(itemsPrice || 0).toLocaleString('ar-EG')} ج
+• المنتجات: ${Number(itemsPrice || 0).toLocaleString('ar-EG')} ج${discountText}
 • الشحن: ${Number(shippingPrice || 0).toLocaleString('ar-EG')} ج
 • *الإجمالي: ${Number(totalPrice || 0).toLocaleString('ar-EG')} ج*
 

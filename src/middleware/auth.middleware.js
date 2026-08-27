@@ -42,4 +42,18 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+/**
+ * Middleware to restrict access to admin users only.
+ * Must be used after protect middleware.
+ */
+const adminOnly = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'غير مصرح — يتطلب صلاحيات المشرف (Admin)',
+    });
+  }
+  next();
+};
+
+module.exports = { protect, adminOnly };

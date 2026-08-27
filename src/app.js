@@ -1,18 +1,23 @@
 const express = require('express');
 const cors = require('cors');
 
+const rateLimit = require('express-rate-limit');
+
 const swaggerSpec = require('./config/swagger');
 
 // Route imports
+const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
 const productRoutes = require('./routes/product.routes');
 const cartRoutes = require('./routes/cart.routes');
 const favoriteRoutes = require('./routes/favorite.routes');
 const orderRoutes = require('./routes/order.routes');
+const couponRoutes = require('./routes/coupon.routes');
 
 const app = express();
 
 // ─────────────────────────────────────────────
-// Middleware
+// Middleware & Rate Limiting
 // ─────────────────────────────────────────────
 
 // CORS — allow requests from the Next.js frontend
@@ -26,6 +31,43 @@ app.use(
 // Parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Global Rate Limiter: 150 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  message: {
+    success: false,
+    message: 'تم تجاوز الحد المسموح به من الطلبات، يرجى المحاولة لاحقاً بعد 15 دقيقة',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', globalLimiter);
+
+// Auth Limiter: 20 login/signup attempts per 15 minutes per IP (Brute-force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    success: false,
+    message: 'محاولات تسجيل دخول كثيرة جداً، يرجى المحاولة بعد 15 دقيقة',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Order Creation Limiter: 15 orders per 15 minutes per IP (Anti-Spam protection)
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: {
+    success: false,
+    message: 'تم تجاوز الحد المسموح لإنشاء الطلبات، يرجى المحاولة بعد قليل',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ─────────────────────────────────────────────
 // Swagger UI — 100% Online via Cloudflare CDN
@@ -92,10 +134,13 @@ app.get('/api-docs.json', (req, res) => {
 // ─────────────────────────────────────────────
 // Routes
 // ─────────────────────────────────────────────
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/favorites', favoriteRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/orders', orderLimiter, orderRoutes);
+app.use('/api/coupons', couponRoutes);
 
 
 

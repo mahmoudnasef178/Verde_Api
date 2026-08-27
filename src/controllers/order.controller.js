@@ -1,15 +1,16 @@
 const Order = require('../models/Order.model');
 const Cart = require('../models/Cart.model');
 const Product = require('../models/Product.model');
+const Coupon = require('../models/Coupon.model');
 const { sendOrderConfirmationEmail } = require('../utils/emailService');
 const { sendOrderNotification } = require('../utils/telegramService');
 
 // @route   POST /api/orders
 // @desc    Create new order (from cart or items array)
-// @access  Protected
+// @access  Protected / Public
 const createOrder = async (req, res) => {
   try {
-    let { orderItems, shippingAddress, paymentMethod = 'COD', shippingPrice = 0 } = req.body;
+    let { orderItems, shippingAddress, paymentMethod = 'COD', shippingPrice = 0, couponCode } = req.body;
 
     if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address || !shippingAddress.city) {
       return res.status(400).json({
@@ -41,22 +42,119 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // ─────────────────────────────────────────────
+    // Verify Products, Prices & Stock from Database
+    // ─────────────────────────────────────────────
+    const verifiedItems = [];
+    let itemsPrice = 0;
+
+    for (const item of orderItems) {
+      const quantity = Math.max(1, parseInt(item.quantity) || 1);
+      let dbProduct = null;
+
+      if (item.product) {
+        dbProduct = await Product.findById(item.product);
+      } else if (item.name) {
+        dbProduct = await Product.findOne({ name: item.name });
+      }
+
+      if (dbProduct) {
+        // Stock check
+        if (dbProduct.stock < quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `عذراً، المنتج "${dbProduct.name}" المتوفر في المخزون (${dbProduct.stock} فقط)، والكمية المطلوبة (${quantity})`,
+          });
+        }
+
+        const authoritativePrice = Number(dbProduct.price);
+        itemsPrice += authoritativePrice * quantity;
+
+        verifiedItems.push({
+          product: dbProduct._id,
+          name: dbProduct.name,
+          price: authoritativePrice,
+          quantity,
+          img: dbProduct.img || item.img || 'https://verde.com/placeholder.png',
+        });
+      } else {
+        // Fallback for custom items if no dbProduct found
+        const price = Number(item.price) || 0;
+        itemsPrice += price * quantity;
+        verifiedItems.push({
+          product: item.product || null,
+          name: item.name,
+          price,
+          quantity,
+          img: item.img || 'https://verde.com/placeholder.png',
+        });
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // Coupon & Discount Processing
+    // ─────────────────────────────────────────────
+    let discountAmount = 0;
+    let appliedCoupon = null;
+
+    if (couponCode && couponCode.trim()) {
+      const code = couponCode.trim().toUpperCase();
+      const coupon = await Coupon.findOne({ code });
+
+      if (coupon) {
+        const validity = coupon.isValid(itemsPrice);
+        if (validity.valid) {
+          discountAmount = coupon.calculateDiscount(itemsPrice);
+          appliedCoupon = coupon;
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `الكوبون غير صالح: ${validity.message}`,
+          });
+        }
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'كود الكوبون غير موجود أو غير صالح',
+        });
+      }
+    }
+
     const normalizedPaymentMethod = (paymentMethod || 'COD').toString().toUpperCase();
+    const finalShippingPrice = Number(shippingPrice || 0);
+    const totalPrice = Math.max(0, itemsPrice - discountAmount) + finalShippingPrice;
 
-    const itemsPrice = orderItems.reduce((acc, item) => acc + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
-    const totalPrice = itemsPrice + Number(shippingPrice || 0);
-
+    // Create Order in DB
     const order = await Order.create({
       user: req.user ? req.user._id : null,
-      orderItems,
+      orderItems: verifiedItems,
       shippingAddress,
       paymentMethod: normalizedPaymentMethod,
       itemsPrice,
-      shippingPrice: Number(shippingPrice || 0),
+      shippingPrice: finalShippingPrice,
+      discount: discountAmount,
+      couponCode: appliedCoupon ? appliedCoupon.code : null,
       totalPrice,
-      isPaid: normalizedPaymentMethod === 'CARD', // Marked paid if card, otherwise false for COD
+      isPaid: normalizedPaymentMethod === 'CARD',
       paidAt: normalizedPaymentMethod === 'CARD' ? new Date() : null,
     });
+
+    // ─────────────────────────────────────────────
+    // Deduct Product Stock & Increment Coupon Count
+    // ─────────────────────────────────────────────
+    for (const item of verifiedItems) {
+      if (item.product) {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: -item.quantity },
+        }).catch((err) => console.error('Failed to deduct stock:', err.message));
+      }
+    }
+
+    if (appliedCoupon) {
+      await Coupon.findByIdAndUpdate(appliedCoupon._id, {
+        $inc: { usedCount: 1 },
+      }).catch((err) => console.error('Failed to update coupon usage:', err.message));
+    }
 
     // Clear user cart if user exists
     if (req.user?._id) {
@@ -69,7 +167,7 @@ const createOrder = async (req, res) => {
       console.error('📨 Telegram notification failed (non-blocking):', err.message)
     );
 
-    // Send confirmation email to the shipping email entered by the customer
+    // Send confirmation email to customer
     const userEmail = (shippingAddress?.email || req.body?.email || req.body?.shippingAddress?.email || req.user?.email || '').trim();
     const userName = shippingAddress?.fullName || req.user?.name || 'عميل فيردي';
     console.log(`📧 Attempting to send confirmation email to customer: ${userEmail}`);
@@ -200,9 +298,22 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
+    const previousStatus = order.status;
     order.status = status;
+
     if (status === 'Delivered') {
       order.deliveredAt = new Date();
+    }
+
+    // If order was cancelled now, restore the stock of products
+    if (status === 'Cancelled' && previousStatus !== 'Cancelled') {
+      for (const item of order.orderItems) {
+        if (item.product) {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.quantity },
+          }).catch((err) => console.error('Failed to restore stock on cancel:', err.message));
+        }
+      }
     }
 
     await order.save();

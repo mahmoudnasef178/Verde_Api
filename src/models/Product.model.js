@@ -83,6 +83,7 @@ const ProductSchema = new mongoose.Schema(
     stock: {
       type: Number,
       default: 100,
+      min: [0, 'المخزون لا يمكن أن يكون سالباً'],
     },
     isAvailable: {
       type: Boolean,

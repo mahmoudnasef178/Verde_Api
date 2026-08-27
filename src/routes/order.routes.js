@@ -6,6 +6,7 @@ const {
   getAllOrders,
   updateOrderStatus,
 } = require('../controllers/order.controller');
+const { protect, adminOnly } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -76,7 +77,7 @@ router.post('/', createOrder);
  *       200:
  *         description: قائمة طلبات المستخدم
  */
-router.get('/my-orders', getUserOrders);
+router.get('/my-orders', protect, getUserOrders);
 
 /**
  * @openapi
@@ -121,7 +122,7 @@ router.get('/:id', getOrderById);
  *       200:
  *         description: قائمة كافة الطلبات
  */
-router.get('/', getAllOrders);
+router.get('/', protect, adminOnly, getAllOrders);
 
 /**
  * @openapi
@@ -155,6 +156,6 @@ router.get('/', getAllOrders);
  *       200:
  *         description: تم تحديث حالة الطلب بنجاح
  */
-router.put('/:id/status', updateOrderStatus);
+router.put('/:id/status', protect, adminOnly, updateOrderStatus);
 
 module.exports = router;

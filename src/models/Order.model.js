@@ -9,7 +9,7 @@ const OrderItemSchema = new mongoose.Schema(
     name: { type: String, required: true },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true },
-    img: { type: String, required: true },
+    img: { type: String, default: '/placeholder-perfume.png' },
   },
   { _id: false }
 );
@@ -52,6 +52,16 @@ const OrderSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 0.0,
+    },
+    discount: {
+      type: Number,
+      default: 0.0,
+    },
+    couponCode: {
+      type: String,
+      default: null,
+      uppercase: true,
+      trim: true,
     },
     totalPrice: {
       type: Number,

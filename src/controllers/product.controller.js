@@ -28,6 +28,7 @@ const getAllProducts = async (req, res) => {
 
     const products = await productsQuery;
 
+
     res.status(200).json({
       success: true,
       count: products.length,
@@ -264,3 +265,4 @@ module.exports = {
   clearAllProducts,
   createProductReview,
 };
+
