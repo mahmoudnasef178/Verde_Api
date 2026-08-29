@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order.model');
 const Cart = require('../models/Cart.model');
 const Product = require('../models/Product.model');
@@ -52,9 +53,11 @@ const createOrder = async (req, res) => {
       const quantity = Math.max(1, parseInt(item.quantity) || 1);
       let dbProduct = null;
 
-      if (item.product) {
+      const isValidId = item.product && mongoose.Types.ObjectId.isValid(item.product.toString());
+      if (isValidId) {
         dbProduct = await Product.findById(item.product);
-      } else if (item.name) {
+      }
+      if (!dbProduct && item.name) {
         dbProduct = await Product.findOne({ name: item.name });
       }
 
@@ -143,7 +146,7 @@ const createOrder = async (req, res) => {
     // Deduct Product Stock & Increment Coupon Count
     // ─────────────────────────────────────────────
     for (const item of verifiedItems) {
-      if (item.product) {
+      if (item.product && mongoose.Types.ObjectId.isValid(item.product.toString())) {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: -item.quantity },
         }).catch((err) => console.error('Failed to deduct stock:', err.message));
