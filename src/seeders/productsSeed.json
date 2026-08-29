@@ -2,7 +2,7 @@
   {
     "name": "Fortis Rex",
     "slug": "fortis-rex",
-    "subtitle": "50 ML — EAU DE PARFUM",
+    "subtitle": "50 ML — EXTRAIT DE PARFUM",
     "price": 500,
     "img": "/products/Fortis Rex.png",
     "imgs": ["/products/Fortis Rex.png"],
@@ -24,7 +24,7 @@
   {
     "name": "Sultan Doré",
     "slug": "sultan-dore",
-    "subtitle": "50 ML — EAU DE PARFUM",
+    "subtitle": "50 ML — EXTRAIT DE PARFUM",
     "price": 550,
     "img": "/products/Sultan Dore.png",
     "imgs": ["/products/Sultan Dore.png"],
@@ -46,7 +46,7 @@
   {
     "name": "Marin Bleu",
     "slug": "marin-bleu",
-    "subtitle": "50 ML — EAU DE PARFUM",
+    "subtitle": "50 ML — EXTRAIT DE PARFUM",
     "price": 650,
     "img": "/products/Marin Blue.png",
     "imgs": ["/products/Marin Blue.png"],
@@ -68,7 +68,7 @@
   {
     "name": "Frost Line",
     "slug": "frost-line",
-    "subtitle": "50 ML — EAU DE PARFUM",
+    "subtitle": "50 ML — EXTRAIT DE PARFUM",
     "price": 850,
     "img": "/products/Frost Line.png",
     "imgs": ["/products/Frost Line.png"],
@@ -90,7 +90,7 @@
   {
     "name": "Blanc Pur",
     "slug": "blanc-pur",
-    "subtitle": "50 ML — EAU DE PARFUM",
+    "subtitle": "50 ML — EXTRAIT DE PARFUM",
     "price": 450,
     "img": "/products/Blanc Pur.png",
     "imgs": ["/products/Blanc Pur.png"],
@@ -112,7 +112,7 @@
   {
     "name": "Mangue Épicée",
     "slug": "mangue-epicee",
-    "subtitle": "50 ML — EAU DE PARFUM",
+    "subtitle": "50 ML — EXTRAIT DE PARFUM",
     "price": 550,
     "img": "/products/Mangue Epicee.png",
     "imgs": ["/products/Mangue Epicee.png"],

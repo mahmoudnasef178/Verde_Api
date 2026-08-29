@@ -17,7 +17,7 @@ const ProductSchema = new mongoose.Schema(
     },
     subtitle: {
       type: String,
-      default: '50 ML — EAU DE PARFUM',
+      default: '50 ML — EXTRAIT DE PARFUM',
     },
     price: {
       type: Number,
