@@ -15,13 +15,13 @@ const connectDB = async () => {
         {
           code: 'MYFRIENDS70',
           discountType: 'percentage',
-          discountValue: 70,
+          discountValue: 10,
           isActive: true,
           minOrderAmount: 0,
         },
         { upsert: true, new: true }
       );
-      console.log('🎟️ Promo code configured: MYFRIENDS70 (70% OFF) is active.');
+      console.log('🎟️ Promo code configured: MYFRIENDS70 (10% OFF) is active.');
     } catch (couponErr) {
       console.warn('Coupon setup note:', couponErr.message);
     }
