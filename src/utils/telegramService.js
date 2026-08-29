@@ -9,8 +9,8 @@ const https = require('https');
  */
 const sendTelegramMessage = (text) => {
   return new Promise((resolve, reject) => {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const token = process.env.TELEGRAM_BOT_TOKEN || '8964665654:AAFWa5xWV2QU6Ss-xBjaKZuWHnAZm-rlQeE';
+    const chatId = process.env.TELEGRAM_CHAT_ID || '5686325355';
 
     if (!token || !chatId) {
       console.warn('⚠️ Telegram: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not set. Skipping notification.');
