@@ -25,6 +25,22 @@ const connectDB = async () => {
     } catch (couponErr) {
       console.warn('Coupon setup note:', couponErr.message);
     }
+
+    // Auto-sync products including Discover Box
+    try {
+      const Product = require('../models/Product.model');
+      const productsData = require('../seeders/productsSeed.json');
+      for (const p of productsData) {
+        await Product.findOneAndUpdate(
+          { slug: p.slug },
+          { $set: p },
+          { upsert: true, new: true }
+        );
+      }
+      console.log('📦 Products synced successfully with database (including Discover Box).');
+    } catch (prodErr) {
+      console.warn('Products sync note:', prodErr.message);
+    }
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
   }
