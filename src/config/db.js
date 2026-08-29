@@ -6,21 +6,24 @@ const connectDB = async () => {
     const conn = await mongoose.connect(uri);
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
 
-    // Auto-seed default coupons if collection is empty
+    // Ensure ONLY MYFRIENDS70 exists in the coupons database
     try {
       const Coupon = require('../models/Coupon.model');
-      const count = await Coupon.countDocuments();
-      if (count === 0) {
-        await Coupon.create([
-          { code: 'VERDE10', discountType: 'percentage', discountValue: 10, isActive: true },
-          { code: 'VERDE15', discountType: 'percentage', discountValue: 15, isActive: true },
-          { code: 'VERDE20', discountType: 'percentage', discountValue: 20, isActive: true },
-          { code: 'WELCOME10', discountType: 'percentage', discountValue: 10, isActive: true },
-        ]);
-        console.log('🎟️ Default coupons auto-seeded: VERDE10, VERDE15, VERDE20, WELCOME10');
-      }
+      await Coupon.deleteMany({ code: { $ne: 'MYFRIENDS70' } });
+      await Coupon.findOneAndUpdate(
+        { code: 'MYFRIENDS70' },
+        {
+          code: 'MYFRIENDS70',
+          discountType: 'percentage',
+          discountValue: 70,
+          isActive: true,
+          minOrderAmount: 0,
+        },
+        { upsert: true, new: true }
+      );
+      console.log('🎟️ Promo code configured: MYFRIENDS70 (70% OFF) is active.');
     } catch (couponErr) {
-      console.warn('Coupon auto-seed note:', couponErr.message);
+      console.warn('Coupon setup note:', couponErr.message);
     }
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
