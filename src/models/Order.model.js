@@ -78,12 +78,24 @@ const OrderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+      enum: ['Pending', 'Processing', 'Prepared', 'Shipped', 'Delivered', 'Cancelled'],
       default: 'Pending',
     },
     deliveredAt: {
       type: Date,
     },
+    lastStatusUpdateAt: {
+      type: Date,
+      default: Date.now,
+    },
+    statusHistory: [
+      {
+        oldStatus: { type: String },
+        newStatus: { type: String, required: true },
+        changedAt: { type: Date, default: Date.now },
+        changedBy: { type: String, default: 'System' },
+      },
+    ],
   },
   { timestamps: true }
 );

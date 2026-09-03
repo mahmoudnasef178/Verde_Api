@@ -5,6 +5,7 @@ const Product = require('../models/Product.model');
 const Coupon = require('../models/Coupon.model');
 const { sendOrderConfirmationEmail } = require('../utils/emailService');
 const { sendOrderNotification } = require('../utils/telegramService');
+const orderService = require('../services/orderService');
 
 // @route   POST /api/orders
 // @desc    Create new order (from cart or items array)
@@ -286,45 +287,20 @@ const getAllOrders = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].includes(status)) {
+    const adminIdentifier = req.user ? `${req.user.name || 'Admin'} (${req.user.email || req.user._id})` : 'Admin API';
+
+    const result = await orderService.changeOrderStatus(req.params.id, status, adminIdentifier);
+    if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: 'حالة الطلب غير صالحة',
+        message: result.message,
       });
     }
-
-    const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'الطلب غير موجود',
-      });
-    }
-
-    const previousStatus = order.status;
-    order.status = status;
-
-    if (status === 'Delivered') {
-      order.deliveredAt = new Date();
-    }
-
-    // If order was cancelled now, restore the stock of products
-    if (status === 'Cancelled' && previousStatus !== 'Cancelled') {
-      for (const item of order.orderItems) {
-        if (item.product) {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity },
-          }).catch((err) => console.error('Failed to restore stock on cancel:', err.message));
-        }
-      }
-    }
-
-    await order.save();
 
     res.status(200).json({
       success: true,
-      message: `تم تحديث حالة الطلب إلى ${status}`,
-      order,
+      message: result.message,
+      order: result.order,
     });
   } catch (error) {
     console.error('Update Order Status Error:', error);

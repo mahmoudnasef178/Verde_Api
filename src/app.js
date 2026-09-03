@@ -13,6 +13,7 @@ const cartRoutes = require('./routes/cart.routes');
 const favoriteRoutes = require('./routes/favorite.routes');
 const orderRoutes = require('./routes/order.routes');
 const couponRoutes = require('./routes/coupon.routes');
+const telegramRoutes = require('./routes/telegram.routes');
 
 const app = express();
 
@@ -141,6 +142,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/orders', orderLimiter, orderRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 
 
