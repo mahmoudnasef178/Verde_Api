@@ -12,7 +12,17 @@ const orderService = require('../services/orderService');
 // @access  Protected / Public
 const createOrder = async (req, res) => {
   try {
-    let { orderItems, shippingAddress, paymentMethod = 'COD', shippingPrice = 0, couponCode } = req.body;
+    let {
+      orderItems,
+      shippingAddress,
+      paymentMethod = 'COD',
+      shippingPrice = 0,
+      couponCode,
+      senderPhone,
+      walletNumber,
+      txId,
+      notes,
+    } = req.body;
 
     if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address || !shippingAddress.city) {
       return res.status(400).json({
@@ -128,12 +138,26 @@ const createOrder = async (req, res) => {
     const finalShippingPrice = Number(shippingPrice || 0);
     const totalPrice = Math.max(0, itemsPrice - discountAmount) + finalShippingPrice;
 
+    // Resolve Vodafone Cash sender phone number
+    let resolvedSenderPhone = (senderPhone || walletNumber || '').trim();
+    if (!resolvedSenderPhone && notes) {
+      const match = notes.match(/محفظة العميل:\s*([0-9+]+)/i) || notes.match(/(01[0125][0-9]{8})/);
+      if (match) resolvedSenderPhone = match[1];
+    }
+    if (!resolvedSenderPhone && ['WALLET', 'VODAFONE_CASH', 'VODAFONE'].includes(normalizedPaymentMethod)) {
+      resolvedSenderPhone = (shippingAddress?.phone || '').trim();
+    }
+
     // Create Order in DB
     const order = await Order.create({
       user: req.user ? req.user._id : null,
       orderItems: verifiedItems,
       shippingAddress,
       paymentMethod: normalizedPaymentMethod,
+      senderPhone: resolvedSenderPhone,
+      walletNumber: resolvedSenderPhone,
+      txId: (txId || '').trim(),
+      notes: (notes || '').trim(),
       itemsPrice,
       shippingPrice: finalShippingPrice,
       discount: discountAmount,

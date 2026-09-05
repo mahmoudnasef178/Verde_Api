@@ -88,6 +88,29 @@ const formatOrderCard = (order, isNewOrderNotification = false) => {
       ? `\n• خصم الكوبون (${couponCode || 'خصم'}): -${Number(discount).toLocaleString('ar-EG')} ج`
       : '';
 
+  // Payment info & Vodafone Cash sender phone
+  const isVodafone = ['WALLET', 'VODAFONE_CASH', 'VODAFONE'].includes((paymentMethod || '').toUpperCase());
+
+  let senderPhone = (order.senderPhone || order.walletNumber || '').trim();
+  if (!senderPhone && order.notes) {
+    const match = order.notes.match(/محفظة العميل:\s*([0-9+]+)/i) || order.notes.match(/(01[0125][0-9]{8})/);
+    if (match) senderPhone = match[1];
+  }
+  if (!senderPhone && isVodafone) {
+    senderPhone = (shippingAddress.phone || '').trim();
+  }
+
+  let paymentSection = `💳 *طريقة الدفع:* ${formatPaymentMethod(paymentMethod)}`;
+  if (isVodafone && senderPhone) {
+    paymentSection += `\n📲 *الرقم المحول منه (فودافون كاش):* \`${senderPhone}\``;
+  }
+  if (order.txId) {
+    paymentSection += `\n🔢 *رقم المعاملة / التحويل:* \`${order.txId}\``;
+  }
+  if (order.notes && !order.notes.startsWith('فودافون كاش | محفظة العميل:')) {
+    paymentSection += `\n📝 *ملاحظات إضافية:* ${order.notes}`;
+  }
+
   return `${header}
 ━━━━━━━━━━━━━━━━━━━
 
@@ -105,7 +128,7 @@ ${itemsText || '• لا توجد منتجات'}
 • الشحن: ${Number(shippingPrice).toLocaleString('ar-EG')} ج
 • *الإجمالي: ${Number(totalPrice).toLocaleString('ar-EG')} جنيه*
 
-💳 *طريقة الدفع:* ${formatPaymentMethod(paymentMethod)}
+${paymentSection}
 
 ${statusDisplay}
 📅 *تاريخ الإنشاء:* ${createdStr}

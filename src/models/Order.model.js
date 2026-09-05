@@ -81,6 +81,22 @@ const OrderSchema = new mongoose.Schema(
       enum: ['Pending', 'Processing', 'Prepared', 'Shipped', 'Delivered', 'Cancelled'],
       default: 'Pending',
     },
+    senderPhone: {
+      type: String,
+      default: '',
+    },
+    walletNumber: {
+      type: String,
+      default: '',
+    },
+    txId: {
+      type: String,
+      default: '',
+    },
+    notes: {
+      type: String,
+      default: '',
+    },
     deliveredAt: {
       type: Date,
     },
